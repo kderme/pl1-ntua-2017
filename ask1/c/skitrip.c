@@ -1,7 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int *Indexes;
+typedef struct Pair{
+	int i;
+	int h;
+}Point;
+
+
+Point *points;
 int N;
 
 int find_solution(){
@@ -12,42 +18,76 @@ int find_solution(){
 	int j_start=0, j_end=0;	//j_end<=j_start always
 	int virtual_j_end=j_end;//this is an improved j_end which can`t yet
 				//be implemented due to the prev constraint
-	int start=Indexes[0];	//We want to maximize this
-	int end=Indexes[0];	//We want to minimize this
+	int start=points[0].i;	//We want to maximize this
+	int end=points[0].i;	//We want to minimize this
 	int virtual_end=end;
 	int index,j;
+#if defined(DBG)
+	printf("State(0):\n");
+	printf("start=(%d,%d)\n",j_start, start);
+	printf("end=(%d,%d)\n",j_end, end);
+	printf("\n");
+
+#endif
 
 	for(j=1;j<N;j++){
-		index=Indexes[j];
-		if(index>start){
+		index=points[j].i;
+		if(start-end<index-virtual_end){
+			//if we found sth better
 			j_start=j;
 			start=index;
 
 			j_end=virtual_j_end;
 			end=virtual_end;
 		}
-		if(index<end){
+		if(index<virtual_end){
+
 			virtual_j_end=j;
 			virtual_end=index;
 		}
-	}
 
+#if defined(DBG)
+	printf("State(%d):\n",j);
+	printf("start=(%d,%d)\n",j_start, start);
+	printf("end=(%d,%d)\n",j_end, end);
+	printf("\n");
+#endif
+	}
+#if defined(DBG)	
+	printf("State(final):\n");
+	printf("start=(%d,%d)\n",j_start, start);
+	printf("end=(%d,%d)\n",j_end, end);
+#endif
 	//result is the difference, which must stay nonegative
 	return start-end;
-	
 }
 
-int *Heights;
+int compare(const void *v1, const void *v2){
+	const Point *p1=v1;
+	const Point *p2=v2;
+	int a=p1->h;
+	int b=p2->h;
+	if(a>b)	return 1;
+	if(a<b)	return -1;
+	if(a==b)
+	return 0;
+}
 
 void sort(){
-	//TODO
-	//sort Heights (increasing order) but also swap Indexes
-	
+	qsort(points, N, sizeof(Point), compare);
 }
 
 void solve(){
 	sort();
 
+	int i;
+#if defined(DBG)
+	printf("\n");
+	printf("Sorted as:\n");
+	for(i=0; i<N; i++)
+		printf("(%d,%d) ",points[i].i,points[i].h);
+	printf("\n");
+#endif
 	int sol=find_solution();
 
 	printf("%d\n",sol);
@@ -57,22 +97,33 @@ int read_file(char * file){
 	//open file
 	FILE *f=fopen(file,"r");
 	if(!f){
-		perror("file not found\n");
+		perror("");
 		exit(1);
 	}
 
 	//read N
-	int N=fscanf(f,"%d",&N);
+	fscanf(f,"%d",&N);
 	if(N<0){
 		printf("N=%d<0",N);
 		exit(1);
 	}
+#if defined(DBG)
+	printf("read from file:\n");
+	printf("N=%d\n",N);
+#endif
+	//init points
+	points=malloc(N*sizeof(Point));
 
-	//read Heights
-	Heights=malloc(N*sizeof(int));
+	//read heights
 	int i;
 	for(i=0; i<N; i++)
-		fscanf(f,"%d",&Heights[i]);
+		fscanf(f,"%d",&points[i].h);
+
+#if defined(DBG)
+	for(i=0; i<N; i++)
+		printf("%d ",points[i].h);
+	printf("\n");
+#endif
 
 	//close file
 	fclose(f);
@@ -89,16 +140,14 @@ int main(int argc, char *args[]){
 
 	N=read_file(args[1]);
 	
-	Indexes=malloc(N*sizeof(int));
+	//init indexes
 	int i;
 	for(i=0; i<N; i++)
-		Indexes[i]=i;
+		points[i].i=i;
 	
-	free(Heights);
-
 	solve();
 		
-	free(Indexes);
+	free(points);
 }
 
 
