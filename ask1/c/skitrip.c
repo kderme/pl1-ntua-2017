@@ -14,8 +14,10 @@ int find_solution(){
 	//Indexes is an array of indexes i
 	//So we use j for indexing this array
 	//instead of i
-	
-	int j_start=0, j_end=0;	//j_end<=j_start always
+#if defined(DBG)
+	int j_start=0;
+#endif
+	int j_end=0;	//j_end<=j_start always
 	int virtual_j_end=j_end;//this is an improved j_end which can`t yet
 				//be implemented due to the prev constraint
 	int start=points[0].i;	//We want to maximize this
@@ -34,7 +36,9 @@ int find_solution(){
 		index=points[j].i;
 		if(start-end<index-virtual_end){
 			//if we found sth better
+#if defined(DBG)
 			j_start=j;
+#endif
 			start=index;
 
 			j_end=virtual_j_end;
@@ -53,7 +57,7 @@ int find_solution(){
 	printf("\n");
 #endif
 	}
-#if defined(DBG)	
+#if defined(DBG)
 	printf("State(final):\n");
 	printf("start=(%d,%d)\n",j_start, start);
 	printf("end=(%d,%d)\n",j_end, end);
@@ -68,8 +72,8 @@ int compare(const void *v1, const void *v2){
 	int a=p1->h;
 	int b=p2->h;
 	if(a>b)	return 1;
-	if(a<b)	return -1;
-	if(a==b)
+	else if(a<b)	return -1;
+	else
 	return 0;
 }
 
@@ -80,7 +84,7 @@ void sort(){
 void solve(){
 	sort();
 
-	int i;
+	//int i;
 #if defined(DBG)
 	printf("\n");
 	printf("Sorted as:\n");
@@ -98,11 +102,15 @@ int read_file(char * file){
 	FILE *f=fopen(file,"r");
 	if(!f){
 		perror("");
+		printf("%s\n",file);
 		exit(1);
 	}
 
 	//read N
-	fscanf(f,"%d",&N);
+	if(fscanf(f,"%d",&N)!=1){
+		perror("reading N");
+		exit(1);
+	}
 	if(N<0){
 		printf("N=%d<0",N);
 		exit(1);
@@ -116,9 +124,12 @@ int read_file(char * file){
 
 	//read heights
 	int i;
-	for(i=0; i<N; i++)
-		fscanf(f,"%d",&points[i].h);
-
+	for(i=0; i<N; i++){
+		if(fscanf(f,"%d",&points[i].h)!=1){
+			perror("reading point");
+			exit(1);
+		}
+	}
 #if defined(DBG)
 	for(i=0; i<N; i++)
 		printf("%d ",points[i].h);
@@ -139,15 +150,13 @@ int main(int argc, char *args[]){
 	}
 
 	N=read_file(args[1]);
-	
+
 	//init indexes
 	int i;
 	for(i=0; i<N; i++)
 		points[i].i=i;
-	
+
 	solve();
-		
+
 	free(points);
 }
-
-
