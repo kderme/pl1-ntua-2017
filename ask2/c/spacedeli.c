@@ -2,80 +2,83 @@
 #include <stdio.h>
 #include <limits.h>
 
+void debug();
 
 typedef struct node_{
-	int x,y;
+	int i;
+	int j;
 	char type;
-	int min;
 	int pizza;
+
 	int visited;
-	int closed;
+	int min;
 	char move;
 	struct node_ *prev;
 }Node;
 
-int new_Node(Node *n, int x,int y, char type, int pizza,int min, int visited,int closed){
-	n->x=x;
-	n->y=y;
+void update_Node(Node *n,int visited,int min, int move, Node * prev){
+	if(n==NULL){
+		printf("NULL Node at update_Node\n");
+		exit(1);
+	}
+	n->visited=visited;
+	n->min=min;
+	n->move=move;
+	n->prev=prev;
+}
+
+int new_Node(Node *n, int i,int j, char type, int pizza){
+	n->i=i;
+	n->j=j;
 	n->type=type;
 	n->pizza=pizza;
-	n->min=min;
-	n->visited=visited;
-	n->closed=closed;
-	n->move=' ';
-	n->prev=NULL;
+
+	update_Node(n,0,INT_MAX,' ',NULL);
 }
 
-typedef struct ListNode_{
-	struct ListNode_ *next;
-	Node * node;
-}ListNode;
-
-typedef struct List_{
-	ListNode *head;
-	ListNode *tail;
+typedef struct Array_{
+	Node ** nodes;
 	int length;
-}List;
+	int capacity;
+	int initial_capacity;
+}Array;
 
-ListNode * new_ListNode(Node *nd){
-	ListNode *lnd=malloc(sizeof(ListNode));
-	lnd->next=NULL;
-	lnd->node=nd;
-	return lnd;
+int insert(Array * arr,Node *nd){
+	if(arr->length==arr->capacity){
+		arr->nodes=realloc(arr->nodes,2*arr->capacity*sizeof(Node *));
+	}
+	arr->capacity=2*arr->capacity;
+	arr->nodes[arr->length]=nd;
+	arr->length++;
 }
 
-List * new_List(){
-	List * ls=malloc(sizeof(List));
-	ls->length=0;
-	ls->head=NULL;
-	ls->tail=NULL;
-	return ls;
+Node * removeNode(Array *arr){
+	if(arr->length==0)
+		return NULL;
+	Node * nd = arr->nodes[arr->length-1];
+	arr->length--;
+	if (arr->length==0){
+		arr->nodes=realloc(arr->nodes,arr->initial_capacity*sizeof(Node *));
+		arr->capacity=arr->initial_capacity;
+	}
+	return nd;
 }
 
-void add_existing_node_to_list(List * ls,ListNode *nd){
-	nd->next=NULL;
-	if (ls->length==0)
-		ls->head=nd;
-	else
-		ls->tail->next=nd;
-	ls->tail=nd;
-	ls->length++;
-}
-
-void add_new_node_to_list(List * ls,Node *nd){
-	ListNode * lnd = new_ListNode(nd);
-	add_existing_node_to_list(ls,lnd);
+Array * new_Array(int capacity){
+	Array * arr=malloc(sizeof(Array));
+	arr->length=0;
+	arr->capacity=capacity;
+	arr->initial_capacity=capacity;
+	arr->nodes=malloc(capacity*sizeof(Node *));
+	return arr;
 }
 
 int N,M,counter;
 #define maxSize 1000
-	Node nodes[maxSize][maxSize];
-	Node nodes0[maxSize][maxSize];
+typedef enum{NOPIZZA=0, WARMHOLE, PIZZA, NUM_TYPES} Types;
+Node nodes[2][maxSize][maxSize];
 Node *start,*end;
-List *ls0;
-List *ls1;
-List *ls2;
-List *ls3;
+Array *arr[3][NUM_TYPES];
 
 void read_file(char * file){
 	//open file
@@ -91,12 +94,12 @@ void read_file(char * file){
 	while(1){
 		while((c=fgetc(f))!=EOF && c!='\n'){
 //int new_Node(Node *n, int x,int y, char type, int pizza,int min, int visited,closed){
-			new_Node(&nodes[i][j],i,j,c,1,INT_MAX,0,0);
-			new_Node(&nodes0[i][j],i,j,c,0,INT_MAX,0,0);
+			new_Node(&nodes[1][i][j],i,j,c,1);
+			new_Node(&nodes[0][i][j],i,j,c,0);
 			if(c=='S')
-				start=&nodes[i][j];
+				start=&nodes[1][i][j];
 			if(c=='E')
-				end=&nodes[i][j];
+				end=&nodes[1][i][j];
 			j++;
 		}
 		if(c==EOF){
@@ -120,7 +123,7 @@ void read_file(char * file){
 	printf("M=%d\n",M);
 	for(i=0; i<N; i++){
 		for(j=0;j<M;j++)
-			printf("%c",nodes[i][j].type);
+			printf("%c",nodes[1][i][j].type);
 		printf("\n");
 	}
 #endif
@@ -128,99 +131,168 @@ void read_file(char * file){
 }
 
 void init(){
-	ls0=new_List();
-	ls1=new_List();
-	ls2=new_List();
-	ls3=new_List();
+	int i,j;
+	for(i=0;i<3;i++){
+		for(j=0; j<NUM_TYPES;j++){
+			arr[i][j]=new_Array(N+M);
+		}
+	}
 
 	start->visited=1;
-	add_new_node_to_list(ls0,start);
+	start->min=0;
+	insert(arr[0][PIZZA],start);
 	counter=0;
 
 }
 
-void rewind_lists(){
-	ls0=ls1;
-	ls1=ls2;
-	ls2=ls3;
-	ls3=NULL;
-}
+void rewind_arrays(){
+	int i,j;
+	Array *t[3];
 
-Node * goes_up(Node * nd){
+	i=0;
+	for(j=0; j<NUM_TYPES;j++)
+		t[j]=arr[i][j];
 
-}
-
-Node * goes_right(Node * nd){
-
-}
-
-Node * goes_left(Node * nd){
-
-}
-
-Node * goes_down(Node * nd){
+	for(i=0;i<2;i++){
+		for(j=0; j<NUM_TYPES;j++)
+			arr[i][j]=arr[i+1][j];
+	}
+	i=2;
+	for(j=0; j<NUM_TYPES;j++)
+		arr[i][j]=t[j];
 
 }
 
-Node * goes_w(Node *nd){
+Node * valid_square(int i, int j, int pizza,int cost){
+	int i_ok= (i>=0 && i<N);
+	int j_ok= (j>=0 && j<M);
+	if(!(i_ok && j_ok))
+		return NULL;
 
+	Node * temp = &nodes[pizza][i][j];
+	if (temp->type=='X')
+		return NULL;
+	if(!(temp->visited))
+		return temp;
+	else
+		return NULL;
 }
 
-void new_found(Node *next, Node * nd, int cost,char m){
-
+void new_found(Node *temp, Node * nd,char m,int cost,Types type){
+	insert(arr[cost][type],temp);
+	if(temp->type=='W' && nd->type!='W')
+		insert(arr[cost][WARMHOLE],temp);
+	update_Node(temp,1,counter+cost,m,nd);
 }
 
 char * create_path(){
-	char *path=malloc(counter*sizeof(char));
+	char *path=malloc((counter+1)*sizeof(char));
 	Node *nd;
-	int i=counter-1;
+	int i=0;
 	for(nd=end;nd!=start; nd=nd->prev){
 		path[i]=nd->move;
+		i++;
+	}
+	path[i]='\0';
+
+	int j,temp;
+	for(j=0;j<i/2;j++){
+		temp=path[j];
+		path[j]=path[i-j-1];
+		path[i-j-1]=temp;
 	}
 	return path;
 }
 
-char * find_path(){
-	for(;;counter++){
-		Node *nd;
-		ListNode *lnd;
-		for(lnd=ls0->head; lnd!=NULL; lnd=lnd->next){
-			nd=lnd->node;
-			Node * temp;
-			if(temp=goes_up(nd)){
-				int cost=2;
-				if(nd->pizza==0)
-					cost=1;
-				new_found(temp, nd,cost,'U');
-			}
-			if(temp=goes_right(nd)){
-				int cost=2;
-				if(nd->pizza==0)
-					cost=1;
-				new_found(temp, nd,cost,'R');
-			}
-			if(temp=goes_left(nd)){
-				int cost=2;
-				if(nd->pizza==0)
-					cost=1;
-				new_found(temp, nd,cost,'L');
-			}
-			if(temp=goes_down(nd)){
-				int cost=2;
-				if(nd->pizza==0)
-					cost=1;
-				new_found(temp, nd,cost,'D');
-			}
-			if(nd->type=='W'){
-				if(temp=goes_w(nd)){
-					int cost=1;
-					new_found(temp,nd, cost,'W');
-				}
-			}
-			if(nd->type=='E'){
-				return create_path();
-			}
+void print(int i, int j){
+	printf("(%d,%d)--{%d}--[",i,j,arr[i][j]->length);
+	int k;
+	Node *temp;
+	for(k=0;k<arr[i][j]->length;k++){
+		temp=arr[i][j]->nodes[k];
+		printf("(%d,%d,%d,%d,%c)",temp->i,temp->j,temp->pizza,temp->min,temp->move);
+		if(k+1<arr[i][j]->length)
+			printf(",");
+	}
+	printf("]\n");
+}
+
+void debug(){
+#if defined(DBG)
+	printf("counter=%d\n",counter);
+	int i,j;
+	for(i=0;i<3;i++){
+		for(j=0;j<NUM_TYPES;j++){
+			print(i,j);
 		}
+	}
+	printf("ok?");
+	char c;
+	while(!(c=getchar()));
+#endif
+}
+
+void move_urld(Node * nd,int cost){
+	Node * temp;
+	Types type=NOPIZZA;
+	if(nd->pizza)
+		type=PIZZA;
+
+	printf("type=%d\n",type);
+	if(temp = valid_square(nd->i-1,nd->j,nd->pizza,cost)){
+#if defined(DBG)
+	printf("U%d",cost);	
+
+#endif
+		new_found(temp, nd,'U',cost,type);
+	}
+	if(temp =  valid_square(nd->i,nd->j+1,nd->pizza,cost)){
+#if defined(DBG)
+	printf("R%d",cost);
+#endif
+		new_found(temp, nd,'R',cost,type);
+	}
+	if(temp =  valid_square(nd->i,nd->j-1,nd->pizza,cost)){
+#if defined(DBG)
+	printf("L%d",cost);
+#endif
+		new_found(temp, nd,'L',cost,type);
+	}
+	if(temp =  valid_square(nd->i+1,nd->j,nd->pizza,cost)){
+#if defined(DBG)
+	printf("D%d",cost);
+#endif
+		new_found(temp, nd,'D',cost,type);
+	}
+}
+
+void move_w(Node *nd){
+	int cost=1;
+	Types type=PIZZA;
+	if(nd->pizza)
+		type=NOPIZZA;
+	Node *temp;
+	if(temp = valid_square(nd->i,nd->j,1-nd->pizza,cost))
+		new_found(temp,nd,'W',cost,type);
+
+}
+
+char * search(){
+	int Moves[4]={'U','R','L','D'};
+	for(;;counter++){
+		debug();
+		Node *nd;
+		int i;
+		while(nd = removeNode(arr[0][NOPIZZA]))
+			move_urld(nd,1);
+		while(nd = removeNode(arr[0][WARMHOLE]))
+			move_w(nd);
+		while(nd = removeNode(arr[0][PIZZA])){
+			if(nd->type=='E')
+				return create_path();
+			move_urld(nd,2);
+		}
+		rewind_arrays();
 	}
 }
 
@@ -234,7 +306,7 @@ int main(int argc, char *args[]){
 	
 	init();
 
-	char * path=find_path();
+	char * path=search();
 
 	printf("%d %s\n",counter,path);
 }
