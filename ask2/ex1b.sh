@@ -20,7 +20,7 @@ fi
 
 if diff "out.c.txt" "out.sml.txt" > /dev/null ;
 then
-	:
+	echo "Same"
 ##	cat out.c.txt
 else
 	echo "files are different ERROR"

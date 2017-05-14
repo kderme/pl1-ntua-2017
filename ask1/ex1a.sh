@@ -14,6 +14,7 @@ then
 
 fi
 
+cat out.c.txt
 sml/skitrip input.txt>out.sml.txt
 if [ $? != 0 ];
 then

@@ -7,7 +7,7 @@ ln=len(sys.argv)
 filename="input.txt"
 
 if ln==1:
-  N=random.randint(2,200)
+  N=random.randint(2,2000000)
 
 elif ln==2:
   N=int(sys.argv[1])

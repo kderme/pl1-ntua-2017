@@ -3,6 +3,16 @@
 #include <limits.h>
 
 void debug();
+static void* safe_malloc(size_t n, unsigned long line)
+{
+  void* p = malloc(n);
+  if (!p){
+    fprintf(stderr, "[%s:%lu]Out of memory(%lu bytes)\n", __FILE__, line, (unsigned long)n);
+    exit(EXIT_FAILURE);
+  }
+  return p;
+}
+#define SAFEMALLOC(n) safe_malloc(n, __LINE__)
 
 typedef struct node_{
 	int i;
@@ -65,18 +75,18 @@ Node * removeNode(Array *arr){
 }
 
 Array * new_Array(int capacity){
-	Array * arr=malloc(sizeof(Array));
+	Array * arr=SAFEMALLOC(sizeof(Array));
 	arr->length=0;
 	arr->capacity=capacity;
 	arr->initial_capacity=capacity;
-	arr->nodes=malloc(capacity*sizeof(Node *));
+	arr->nodes=SAFEMALLOC(capacity*sizeof(Node *));
 	return arr;
 }
 
 int N,M,counter;
 #define maxSize 1000
 typedef enum{NOPIZZA=0, WARMHOLE, PIZZA, NUM_TYPES} Types;
-Node nodes[2][maxSize][maxSize];
+Node ***nodes; 
 Node *start,*end;
 Array *arr[3][NUM_TYPES];
 
@@ -92,7 +102,7 @@ void read_file(char * file){
 	int j=0;
 	int c;
 	while(1){
-		while((c=fgetc(f))!=EOF && c!='\n'){
+		while((c=fgetc(f))!=EOF && c!='\n' && c!='\r'){
 //int new_Node(Node *n, int x,int y, char type, int pizza,int min, int visited,closed){
 			new_Node(&nodes[1][i][j],i,j,c,1);
 			new_Node(&nodes[0][i][j],i,j,c,0);
@@ -110,8 +120,12 @@ void read_file(char * file){
 			break;
 		}
 		else if(c=='\n'){
-			if(i==0)
+		#if defined(DBG2)
+			printf("%d-",j);
+		#endif
+			if(i==0){
 				M=j;
+			}
 			i++;
 			j=0;
 		}
@@ -186,7 +200,7 @@ void new_found(Node *temp, Node * nd,char m,int cost,Types type){
 }
 
 char * create_path(){
-	char *path=malloc((counter+1)*sizeof(char));
+	char *path=SAFEMALLOC((counter+1)*sizeof(char));
 	Node *nd;
 	int i=0;
 	for(nd=end;nd!=start; nd=nd->prev){
@@ -293,19 +307,34 @@ char * search(){
 	}
 }
 
+void mallocies(){
+	int i,j;
+	nodes=SAFEMALLOC(2*sizeof(Node **));
+	for (i=0;i<2;i++){
+		nodes[i]=SAFEMALLOC(maxSize*sizeof(Node *));
+		for (j=0;j<maxSize;j++){
+		   nodes[i][j]=SAFEMALLOC(maxSize*sizeof(Node));
+		}
+	}
+}
+
 int main(int argc, char *args[]){
 	if (argc!=2){
 		printf("Usage: %s file.txt\n", args[0]);
 		exit(1);
 	}
 
+	mallocies();
+
 	read_file(args[1]);
-	
+#if defined(DBG2)
+	printf("(%d,%d),(%d,%d),%d,%d",start->i,start->j,end->i,end->j,N,M);
+#endif
+
 	init();
 
 	char * path=search();
 
 	printf("%d %s\n",counter,path);
 }
-
 
