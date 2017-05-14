@@ -1,3 +1,6 @@
+val DEBUG=false;
+fun str (n:int)=Int.toString n
+
 fun merge(nil, ys) f = ys
   | merge(xs, nil) f= xs
   | merge(x::xs, y::ys) f=
@@ -54,9 +57,9 @@ fun compare ((h1,i1),(h2,i2))=
 fun solve (ls:((int*int) list))=
 let
         fun taken (n:int)=
-        let val (h,_)=List.nth(ls,n)
+        let val (_,i)=List.nth(ls,n)
         in
-          h
+          i
         end
           val initial_state=(taken 0,taken 0,taken 0)
         
@@ -74,10 +77,24 @@ in
         ret
 end
 
+fun f (a:int,b:int)= "("^str(a)^","^str(b)^")"
+
+fun print_list (ls:(int*int) list)=
+let 
+  val ls1=map f ls
+  val str=foldr (fn (c,sofar)=>c^","^sofar) "]" ls1
+in
+  print ("["^str)
+end
+
+
+
 fun skitrip file=
 let
         val ls=parse file
+(*        val sorted_ls = ListMergeSort.sort compare ls *)
         val sorted_ls = mergesort ls compare
+        val _ = if DEBUG then print_list sorted_ls else ()
 in 
         solve sorted_ls
 end
