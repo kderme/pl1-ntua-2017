@@ -1,5 +1,6 @@
-val DEBUG=true;
-val DEBUG2=false;
+val DEBUG=false;
+val DEBUG2=true;
+
 
 exception over;
 exception notall
@@ -10,7 +11,7 @@ fun mp #"S"  = 1
   | mp #"W"  = 4
   | mp #"E"  = 5
   | mp #"\n" = 6
-  | mp _     = raise notall
+  | mp _     = 10
 
 fun ty 1="S" 
   | ty 2="." 
@@ -126,7 +127,7 @@ let
       val _ = if DEBUG then print_node M node else ()
       val _ = if DEBUG then print "\n" else ()
     in
-      if k=s orelse q=10 then String.concat (map mov ((acc)))
+      if k=s then String.concat (map mov ((acc)))
       else path_rec (move::acc) (#7 node,prev_pizza) (q+1)
     end
   in
@@ -229,10 +230,17 @@ let
   loop 0
 end
 
+fun mpp (c,ls)=
+let
+  val n=mp c
+in 
+  if n<>10 then (n::ls) else ls
+end
+
 fun spacedeli file=
 let 
   val ls_file=parse file
-  val ls_file_int=map mp ls_file
+  val ls_file_int=foldr mpp [] ls_file
   val lsls1=foldr ff [[]] ls_file_int
   val N=List.length(lsls1)
   val M=List.length(hd lsls1)
@@ -255,3 +263,16 @@ in
 
  search(N,M,s,e,nodes1,nodes0,arr)
 end
+
+fun main ()=
+let 
+  val argv=(CommandLine.arguments())
+  val file = hd argv
+  val (counter,path) = spacedeli file
+  val output=if DEBUG2 then (str(counter)^" "^path^"\n")
+        else ("("^str(counter)^","^path^")\n")
+in
+  print output
+end
+
+(**) val _ = main () (**)

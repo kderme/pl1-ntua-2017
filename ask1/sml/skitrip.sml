@@ -1,3 +1,33 @@
+fun merge(nil, ys) f = ys
+  | merge(xs, nil) f= xs
+  | merge(x::xs, y::ys) f=
+
+  if f(x,y) then
+    x::merge(xs, y::ys) f
+  else
+    y::merge(x::xs, ys) f;
+
+fun split nil = (nil,nil)
+  |     split [a] = ([a],[])
+  |     split (a::b::cs) = 
+let 
+  val (M,N) =split cs 
+in 
+  (a::M, b::N)
+end
+
+fun mergesort nil f = nil
+  | mergesort [a] f= [a]
+  | mergesort [a,b] f= if f(a,b) 
+        then [a,b]
+        else [b,a]
+
+  |   mergesort L f=
+          let val (M,N) = split L
+  in
+     merge (mergesort M f, mergesort N f) f
+  end
+
 fun parse file =
 let
         (* a function to read an integer from an input stream *)
@@ -19,7 +49,7 @@ in
 end
 
 fun compare ((h1,i1),(h2,i2))=
-  h1>h2
+  h1<h2
 
 fun solve (ls:((int*int) list))=
 let
@@ -47,8 +77,23 @@ end
 fun skitrip file=
 let
         val ls=parse file
-        val sorted_ls = ListMergeSort.sort compare ls 
+        val sorted_ls = mergesort ls compare
 in 
         solve sorted_ls
 end
+
+
+fun main()=
+let
+  val argv=(CommandLine.arguments())
+  val file = hd argv
+  val n=skitrip file
+in
+  print ((Int.toString n)^"\n")
+end
+
+(**) val _ =main () (**)
+
+
+
 

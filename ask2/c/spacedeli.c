@@ -27,7 +27,7 @@ void update_Node(Node *n,int visited,int min, int move, Node * prev){
 	n->prev=prev;
 }
 
-int new_Node(Node *n, int i,int j, char type, int pizza){
+void new_Node(Node *n, int i,int j, char type, int pizza){
 	n->i=i;
 	n->j=j;
 	n->type=type;
@@ -43,7 +43,7 @@ typedef struct Array_{
 	int initial_capacity;
 }Array;
 
-int insert(Array * arr,Node *nd){
+void insert(Array * arr,Node *nd){
 	if(arr->length==arr->capacity){
 		arr->nodes=realloc(arr->nodes,2*arr->capacity*sizeof(Node *));
 	}
@@ -238,27 +238,26 @@ void move_urld(Node * nd,int cost){
 	if(nd->pizza)
 		type=PIZZA;
 
-	printf("type=%d\n",type);
-	if(temp = valid_square(nd->i-1,nd->j,nd->pizza,cost)){
+	if((temp = valid_square(nd->i-1,nd->j,nd->pizza,cost))){
 #if defined(DBG)
 	printf("U%d",cost);	
 
 #endif
 		new_found(temp, nd,'U',cost,type);
 	}
-	if(temp =  valid_square(nd->i,nd->j+1,nd->pizza,cost)){
+	if((temp =  valid_square(nd->i,nd->j+1,nd->pizza,cost))){
 #if defined(DBG)
 	printf("R%d",cost);
 #endif
 		new_found(temp, nd,'R',cost,type);
 	}
-	if(temp =  valid_square(nd->i,nd->j-1,nd->pizza,cost)){
+	if((temp =  valid_square(nd->i,nd->j-1,nd->pizza,cost))){
 #if defined(DBG)
 	printf("L%d",cost);
 #endif
 		new_found(temp, nd,'L',cost,type);
 	}
-	if(temp =  valid_square(nd->i+1,nd->j,nd->pizza,cost)){
+	if((temp =  valid_square(nd->i+1,nd->j,nd->pizza,cost))){
 #if defined(DBG)
 	printf("D%d",cost);
 #endif
@@ -272,22 +271,20 @@ void move_w(Node *nd){
 	if(nd->pizza)
 		type=NOPIZZA;
 	Node *temp;
-	if(temp = valid_square(nd->i,nd->j,1-nd->pizza,cost))
+	if((temp = valid_square(nd->i,nd->j,1-nd->pizza,cost)))
 		new_found(temp,nd,'W',cost,type);
 
 }
 
 char * search(){
-	int Moves[4]={'U','R','L','D'};
 	for(;;counter++){
 		debug();
 		Node *nd;
-		int i;
-		while(nd = removeNode(arr[0][NOPIZZA]))
+		while((nd = removeNode(arr[0][NOPIZZA])))
 			move_urld(nd,1);
-		while(nd = removeNode(arr[0][WARMHOLE]))
+		while((nd = removeNode(arr[0][WARMHOLE])))
 			move_w(nd);
-		while(nd = removeNode(arr[0][PIZZA])){
+		while((nd = removeNode(arr[0][PIZZA]))){
 			if(nd->type=='E')
 				return create_path();
 			move_urld(nd,2);
