@@ -127,7 +127,7 @@ let
       val _ = if DEBUG then print_node M node else ()
       val _ = if DEBUG then print "\n" else ()
     in
-      if k=s then String.concat (map mov ((acc)))
+      if k=s andalso pizza then String.concat (map mov ((acc)))
       else path_rec (move::acc) (#7 node,prev_pizza) (q+1)
     end
   in
