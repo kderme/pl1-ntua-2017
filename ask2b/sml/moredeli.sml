@@ -231,7 +231,7 @@ in
   if n<>10 then (n::ls) else ls
 end
 
-fun spacedeli file=
+fun moredeli file=
 let 
   val ls_file=parse file
   val ls_file_int=foldr mpp [] ls_file
@@ -253,16 +253,13 @@ in
   search(N,M,s,e,nodes,ls4)
 end
 
-(*
 fun main ()=
 let 
   val argv=(CommandLine.arguments())
   val file = hd argv
-  val (counter,path) = spacedeli file
-  val output=if DEBUG2 then (str(counter)^" "^path^"\n")
-        else ("("^str(counter)^","^path^")\n")
+  val (counter,path) = moredeli file
+  val output=str(counter)^" "^path^"\n"
 in
   print output
 end
-*)
-(* val _ = main () *)
+(**) val _ = main () (**)
