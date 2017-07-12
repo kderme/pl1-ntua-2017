@@ -1,8 +1,9 @@
 val DEBUG=false;
-val DEBUG2=true;
+val DEBUG2=false;
 
 
 exception over;
+exception ekato;
 exception notall
 
 fun mp #"S"  = 1
@@ -27,6 +28,12 @@ fun mov 0="q"
 |   mov 4="D"
 |   mov _=raise notall
 
+fun cst 1 = 3
+|   cst 2 = 1
+|   cst 3 = 2
+|   cst 4 = 1
+|   cst _=raise notall
+
 fun arr2 (i,j)=4*i+j
 
 fun str (n:int)=Int.toString n
@@ -34,30 +41,35 @@ fun str (n:int)=Int.toString n
 fun strb b=if b then "true" else "false"
 
 fun print_node (M:int)
-  (typee:int,k:int,pizza:bool,min:int,visited:bool,move:int,prev:int)=
+  (typee:int,k:int,min:int,visited:bool,move:int,prev:int)=
   print 
-("("^ty(typee)^","^str(Int.div(k,M))^","^str(Int.mod(k,M))^","^strb(pizza)^","^str(min)^","^strb(visited)^","^mov(move)^","^str(prev)^")")
+("("^ty(typee)^","^str(Int.div(k,M))^","^str(Int.mod(k,M))^","^str(min)^","^strb(visited)^","^mov(move)^","^str(prev)^")")
 
-fun print_node_k (M:int) ( nodes:(((int*int*bool*int*bool*int*int) array))) (k:int) =
+fun print_node_k (M:int) ( nodes:(((int*int*int*bool*int*int) array))) (k:int) =
     print_node M (Array.sub(nodes,k))
 
-fun print_node_list (M:int)
-  ( nodes1:(((int*int*bool*int*bool*int*int) array))) 
-  ( nodes0:(((int*int*bool*int*bool*int*int) array))) 
-  (k2,ls:int list) =
-let 
+fun print_node_list 
+  (M:int)
+  ( nodes:(((int*int*int*bool*int*int) array))) 
+  (ls:int list) =
+let
   val _ = print ("--{"^str(List.length(ls))^"}--[")
-  val nodes=if Int.mod(k2,4)=0 orelse Int.mod(k2,4)=1 then nodes0 else nodes1
   val _ = List.map (print_node_k M nodes ) ls
   val _ = print "]\n"
 in () end
-  
-fun print_array (
-  arr:(int list array),
-  nodes1:(int*int*bool*int*bool*int*int) array,
-  nodes0:(int*int*bool*int*bool*int*int) array,
+
+fun print4 (
+  ls4:(int list*int list*int list*int list),
+  nodes:(int*int*int*bool*int*int) array,
   M:int  )=
-Array.appi (print_node_list M nodes1 nodes0) arr
+  let 
+    val _= print_node_list M nodes (#1 ls4)
+    val _= print_node_list M nodes (#2 ls4)
+    val _= print_node_list M nodes (#3 ls4)
+    val _= print_node_list M nodes (#4 ls4)
+  in 
+    ()
+  end
 
 fun parse file =
 let 
@@ -103,7 +115,8 @@ fun search(
   ls4:(int list*int list*int list*int list)
   )=
 let
-  
+  val _=if DEBUG then print ("("^str(N)^","^str(M)^","^str(s)^","^str(e)^")") else
+    ()
   fun is_end x=x=e
 
   fun ii k=Int.div(k,M)
@@ -121,21 +134,28 @@ let
       (*val _ = if DEBUG then print_node M node else ()*)
       val _ = if DEBUG then print "\n" else ()
     in
-      if k=s then String.concat (map mov acc)
+      if k=s then 
+      let
+        val path=String.concat (map mov acc)
+        val cost=List.foldl (fn (a,sum)=>sum+cst(a)) 0 acc
+      in 
+        (cost,path)
+      end
       else path_rec (move::acc) (#6 node) (q+1)
     end
   in
     path_rec [] e 0
   end (*find path *)
 
-(*  
+(*
  *  main loop function with counter
  *   This function is nested in search 
  *)
 fun loop (counter:int) (ls4:(int list*int list*int list*int list))=
+  if counter>100 then raise ekato else
 let
   val _ =if DEBUG then print ("\ncounter="^str(counter)^"\n") else ()
-
+  val _ =if DEBUG then print4(ls4,nodes,M) else ()
   (*check if new node is valid, insert and update*)
   (* (type,k,min,visited,move,prev) *)
   fun valid(
@@ -144,6 +164,7 @@ let
     i:int,j:int,move:int)=
   if i<0 orelse i>=N orelse j<0 orelse j>=M then Option.NONE else
   let 
+(*  val _ =print ((mov move)^"---------")*)
     val new_k=i*M+j
     val new_node = Array.sub(nodes,new_k)
     val (new_t,_,new_min,new_visited,new_move,new_prev)=new_node
@@ -170,15 +191,16 @@ let
   fun move cost (k:int) (ls:int list)=
   let
     val node=Array.sub(nodes,k)
+(*    val _ =print_node M node*)
     val i = ii k
     val j = jj k
+(*    val _ =print(str(i)^","^str(j)^"\n")*)
   in
-    if #4 node then ls else
     if cost=1 then
     let 
       val ls_1=valid_wrapper(ls,(k,cost,i,j+1,2))
     in
-      valid_wrapper(ls_1,(k,cost,i-1,j,4))
+      valid_wrapper(ls_1,(k,cost,i+1,j,4))
     end
     else if cost=2 then 
       valid_wrapper(ls,(k,cost,i,j-1,3))
