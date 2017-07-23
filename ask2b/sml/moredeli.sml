@@ -152,7 +152,6 @@ let
  *   This function is nested in search 
  *)
 fun loop (counter:int) (ls4:(int list*int list*int list*int list))=
-  if counter>100 then raise ekato else
 let
   val _ =if DEBUG then print ("\ncounter="^str(counter)^"\n") else ()
   val _ =if DEBUG then print4(ls4,nodes,M) else ()

@@ -1,5 +1,3 @@
-package lakis;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -64,8 +62,6 @@ public class Moredeli {
 	  Node nd;
 	  
 	  for(int counter=0;;counter++){
-		  if (counter==50)
-			  break;
 		  if(DEBUG)
 			  Node.printAll(ls1,ls2,ls3,ls4,counter);
 		  for(Node node:ls1){
@@ -117,7 +113,12 @@ public class Moredeli {
    	ArrayList<Character> ls=new ArrayList<Character>(counter);
    	for(Node node=end;node!=start;node=node.prev)
    		ls.add(0,node.move);
-   	path=ls.toString();
+	StringBuilder result = new StringBuilder(ls.size());
+	for (Character c : ls) {
+		  result.append(c);
+	}
+	path = result.toString();
+//   	path=new String (ls);
    	totalCost=end.min;
   }
 
@@ -176,7 +177,47 @@ public class Moredeli {
 	  
 	  more.search();
 	  
-	  System.out.println(more.totalCost+" "+more.path.toString());
+	  System.out.println(more.totalCost+" "+more.path);
   }
-  
+}
+
+class Node {
+
+	public int i;
+	public int j;
+	public char type;
+	public int min=Integer.MAX_VALUE;
+	boolean visited=false;
+	char move='Q';
+	Node prev=null;
+	
+	public Node(int i, int j,char type){
+		this.i=i;
+		this.j=j;
+		this.type=type;
+	}
+	
+	public void print(){
+		String prv="null";
+		if (prev!=null)
+			prv="("+prev.i+","+prev.j+")";
+		System.out.println
+("("+i+","+j+","+type+","+min+","+visited+","+move+","+prv+")");
+	}
+	
+	public static void printArr(ArrayList<Node> ls,String header){
+		System.out.println(header);
+		for(Node node:ls){
+			node.print();
+		}
+	}
+
+	public static void printAll(ArrayList<Node> ls1, ArrayList<Node> ls2, ArrayList<Node> ls3, ArrayList<Node> ls4,
+			int counter) {
+		System.out.println("counter="+counter);
+		printArr(ls1,ls1.size()+"");
+		printArr(ls2,ls2.size()+"");
+		printArr(ls3,ls3.size()+"");
+		printArr(ls4,ls4.size()+"");
+	}
 }
